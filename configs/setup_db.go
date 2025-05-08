@@ -30,3 +30,10 @@ func ConnectDB() *mongo.Client {
 	fmt.Println("connected to mongoDB")
 	return client
 }
+
+var DB *mongo.Client = ConnectDB()
+
+func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
+	collection := DB.Database("tesodev_product").Collection(collectionName)
+	return collection
+}
