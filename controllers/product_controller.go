@@ -15,14 +15,6 @@ import (
 
 var timeOut = 10 * time.Second
 
-func validateObjectId(c echo.Context, id string) (string, error) {
-	_, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return "", c.JSON(http.StatusBadRequest, responses.ResponseHandler{Status: http.StatusBadRequest, Message: "id is not a object id", Data: &echo.Map{"data": err.Error()}})
-	}
-	return id, nil
-}
-
 func CreateProduct(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
 	defer cancel()
@@ -54,18 +46,20 @@ func CreateProduct(c echo.Context) error {
 		fmt.Println("did not create product")
 	}
 
-	fmt.Println(result)
-
 	return c.JSON(http.StatusCreated, responses.ResponseHandler{Status: http.StatusCreated, Message: "Successfuly create product", Data: &echo.Map{"data": result}})
 }
 
 func UpdateProduct(c echo.Context) error {
-
 	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
 	defer cancel()
 
 	var product models.Product
-	userId, _ := validateObjectId(c, c.Param("product_id"))
+	productId, err := primitive.ObjectIDFromHex(c.Param("product_id"))
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, responses.ResponseHandler{Status: http.StatusBadRequest, Message: "id is not a object id", Data: &echo.Map{"data": err.Error()}})
+	}
+
 	if err := c.Bind(&product); err != nil {
 		return c.JSON(http.StatusBadRequest, responses.ResponseHandler{Status: http.StatusBadRequest, Message: "Invalid data type only JSON", Data: &echo.Map{"data": err.Error()}})
 	}
@@ -83,11 +77,31 @@ func UpdateProduct(c echo.Context) error {
 		"update_at":   product.Updated_at,
 	}
 
-	result, err := productCollection.UpdateOne(ctx, bson.M{"id": userId}, bson.M{"$set": updateProduct})
+	result, err := productCollection.UpdateOne(ctx, bson.M{"id": productId}, bson.M{"$set": updateProduct})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "product did not update", Data: &echo.Map{"data": err.Error()}})
 	}
 
 	return c.JSON(http.StatusCreated, responses.ResponseHandler{Status: http.StatusCreated, Message: "Successfuly update product", Data: &echo.Map{"data": result}})
+
+}
+
+func GetAProduct(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+
+	var product models.Product
+
+	productId, err := primitive.ObjectIDFromHex(c.Param("product_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, responses.ResponseHandler{Status: http.StatusBadRequest, Message: "id is not a object id", Data: &echo.Map{"data": err.Error()}})
+	}
+
+	err = productCollection.FindOne(ctx, bson.M{"_id": productId}).Decode(&product)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "product did not fetch", Data: &echo.Map{"data": err.Error()}})
+	}
+
+	return c.JSON(http.StatusCreated, responses.ResponseHandler{Status: http.StatusCreated, Message: "Successfuly fetch product", Data: &echo.Map{"data": product}})
 
 }
