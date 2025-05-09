@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"tesodev_interview/configs"

@@ -26,6 +26,7 @@ func main() {
 	configs.ConnectDB()
 
 	routes.ProductRoute(e)
+	routes.SearchRoute(e)
 
 	e.Logger.Fatal(e.Start(":3000"))
 }
