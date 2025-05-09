@@ -9,4 +9,5 @@ import (
 
 func ProductRoute(e *echo.Echo) {
 	e.POST("/product", middleware.LogMiddleware(controllers.CreateProduct))
+	e.PUT("/product/:product_id", middleware.LogMiddleware(controllers.UpdateProduct))
 }
