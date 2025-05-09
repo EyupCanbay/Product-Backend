@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"tesodev_interview/configs"
 	"tesodev_interview/middleware"
@@ -25,7 +24,6 @@ func main() {
 	e.Use(middleware.LogMiddleware)
 
 	configs.ConnectDB()
-	fmt.Println("db bağlanma sonrası")
 
 	routes.ProductRoute(e)
 

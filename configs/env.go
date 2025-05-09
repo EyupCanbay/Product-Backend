@@ -1,7 +1,6 @@
 package configs
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -14,9 +13,5 @@ func DatabaseEnv() string {
 		log.Fatalf("an error .env: did not find .env file: %s", err)
 	}
 
-	buffer := os.Getenv("DB_URI")
-
-	fmt.Println(buffer)
-
-	return buffer
+	return os.Getenv("DB_URI")
 }
