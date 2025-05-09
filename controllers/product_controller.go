@@ -82,7 +82,7 @@ func UpdateProduct(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "product did not update", Data: &echo.Map{"data": err.Error()}})
 	}
 
-	return c.JSON(http.StatusCreated, responses.ResponseHandler{Status: http.StatusCreated, Message: "Successfuly update product", Data: &echo.Map{"data": result}})
+	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "Successfuly update product", Data: &echo.Map{"data": result}})
 
 }
 
@@ -102,6 +102,30 @@ func GetAProduct(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "product did not fetch", Data: &echo.Map{"data": err.Error()}})
 	}
 
-	return c.JSON(http.StatusCreated, responses.ResponseHandler{Status: http.StatusCreated, Message: "Successfuly fetch product", Data: &echo.Map{"data": product}})
+	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "Successfuly fetch product", Data: &echo.Map{"data": product}})
 
+}
+
+func GetAllProduct(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+
+	var products []models.Product
+
+	results, err := productCollection.Find(ctx, bson.M{})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "data did not fetch", Data: &echo.Map{"data": err.Error()}})
+	}
+
+	defer results.Close(ctx)
+	for results.Next(ctx) {
+		var singleProduct models.Product
+		if err = results.Decode(&singleProduct); err != nil {
+			return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "data did not fetch", Data: &echo.Map{"data": err.Error()}})
+		}
+
+		products = append(products, singleProduct)
+	}
+
+	return c.JSON(http.StatusCreated, responses.ResponseHandler{Status: http.StatusOK, Message: "Successfuly fetch products", Data: &echo.Map{"data": products}})
 }
