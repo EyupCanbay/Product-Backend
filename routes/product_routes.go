@@ -12,4 +12,5 @@ func ProductRoute(e *echo.Echo) {
 	e.PUT("/product/:product_id", middleware.LogMiddleware(controllers.UpdateProduct))
 	e.GET("/product/:product_id", middleware.LogMiddleware(controllers.GetAProduct))
 	e.GET("/product", middleware.LogMiddleware(controllers.GetAllProduct))
+	e.DELETE("/product/:product_id", middleware.LogMiddleware(controllers.DeleteProduct))
 }

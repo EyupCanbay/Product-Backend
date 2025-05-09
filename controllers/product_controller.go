@@ -127,5 +127,24 @@ func GetAllProduct(c echo.Context) error {
 		products = append(products, singleProduct)
 	}
 
-	return c.JSON(http.StatusCreated, responses.ResponseHandler{Status: http.StatusOK, Message: "Successfuly fetch products", Data: &echo.Map{"data": products}})
+	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "Successfuly fetch products", Data: &echo.Map{"data": products}})
+}
+
+func DeleteProduct(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+
+	productId, _ := primitive.ObjectIDFromHex(c.Param("product_id"))
+
+	result, err := productCollection.DeleteOne(ctx, bson.M{"_id": productId})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "product did not delete", Data: &echo.Map{"data": err.Error()}})
+	}
+
+	if result.DeletedCount < 1 {
+		return c.JSON(http.StatusNotFound, responses.ResponseHandler{Status: http.StatusNotFound, Message: "error", Data: &echo.Map{"data": "product with id not found"}})
+	}
+
+	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": "Successfuly delete products"}})
+
 }
