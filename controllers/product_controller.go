@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var timeOut = 10 * time.Second
@@ -102,7 +103,7 @@ func GetAProduct(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "product did not fetch", Data: &echo.Map{"data": err.Error()}})
 	}
 
-	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "Successfuly fetch product", Data: &echo.Map{"data": product}})
+	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "Successfuly fetch product", Data: &echo.Map{"data": &product}})
 
 }
 
@@ -146,5 +147,46 @@ func DeleteProduct(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": "Successfuly delete products"}})
+}
 
+func UpdateSingleFeild(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+
+	productId, _ := primitive.ObjectIDFromHex(c.Param("product_id"))
+
+	var product models.Product
+	if err := c.Bind(&product); err != nil {
+		return c.JSON(http.StatusBadRequest, responses.ResponseHandler{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": "Invalid request body"}})
+	}
+
+	update := bson.M{}
+	if product.Name != "" {
+		update["name"] = product.Name
+	}
+	if product.Price != "" {
+		update["price"] = product.Price
+	}
+	if product.Description != "" {
+		update["description"] = product.Description
+	}
+
+	if len(update) == 0 {
+		return c.JSON(http.StatusBadRequest, responses.ResponseHandler{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": "No fields to update"}})
+	}
+
+	filter := bson.M{"_id": productId}
+	updateDoc := bson.M{"$set": update}
+	opts := options.Update().SetUpsert(false)
+
+	result, err := productCollection.UpdateOne(ctx, filter, updateDoc, opts)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, responses.ResponseHandler{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": "failed update product"}})
+	}
+
+	if result.MatchedCount == 0 {
+		return c.JSON(http.StatusNotFound, responses.ResponseHandler{Status: http.StatusNotFound, Message: "error", Data: &echo.Map{"data": "product not found"}})
+	}
+
+	return c.JSON(http.StatusOK, responses.ResponseHandler{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": &result}})
 }
